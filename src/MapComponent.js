@@ -1,94 +1,36 @@
-// import React, { useState, useEffect, useRef } from "react";
-// import Map from "@arcgis/core/Map";
-// import MapView from "@arcgis/core/views/MapView";
-// import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
-// import esriConfig from "@arcgis/core/config";
-
-// const MapComponent = () => {
-//   const mapRef = useRef(null);
-//   const [layerType, setLayerType] = useState("counties"); // Default layer type
-
-//   // Handle the dropdown change for the layer type
-//   const handleLayerChange = (event) => {
-//     setLayerType(event.target.value);
-//   };
-
-//   useEffect(() => {
-//     // Set the ArcGIS API for JavaScript API key
-//     esriConfig.apiKey =
-//       "AAPKfc0531ceea1e4e4ba449ee44ffb7b738llqmKzaR6-Oz_wxBRlOT9kP_kH2deWLOy-kbHrgGEJymMDfOyzGnjCh67U7NBhE5";
-
-//     // Create the Map
-//     const map = new Map({
-//       basemap: "streets-vector", // Basemap layer service
-//     });
-
-//     // Create the MapView
-//     const view = new MapView({
-//       container: mapRef.current, // Reference to the DOM node that will contain the view
-//       map: map,
-//       center: [-80.943139, 35.219618], // Longitude, latitude
-//       zoom: 6,
-//     });
-
-//     // Definition expression for counties in NC and SC
-//     const countyFilterExpression = [
-//       "(STATE_FIPS = '37' AND CNTY_FIPS IN ('119', '071', '097','035','159','109','025','167','045','179','007'))",
-//       "(STATE_FIPS = '45' AND CNTY_FIPS IN ('023', '091', '057'))",
-//     ].join(" OR ");
-
-//     // Feature layer for USA counties
-//     const countiesLayer = new FeatureLayer({
-//       url: "https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/USA_Counties_Generalized/FeatureServer/0",
-//       definitionExpression: countyFilterExpression,
-//       outFields: ["*"], // Adjust as needed
-//       visible: layerType === "counties",
-//     });
-
-//     // Feature layer for USA census tracts
-//     const censusTractsLayer = new FeatureLayer({
-//       url: "https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/USA_Census_Tracts/FeatureServer/0",
-//       definitionExpression: countyFilterExpression,
-//       outFields: ["*"], // Adjust as needed
-//       visible: layerType === "tracts",
-//     });
-
-//     // Add the feature layers to the map
-//     map.addMany([countiesLayer, censusTractsLayer]);
-
-//     // Cleanup function to run when the component is unmounted
-//     return () => {
-//       if (view) {
-//         view.container = null; // To prevent potential memory leaks
-//       }
-//     };
-//   }, [layerType]); // Rerun the effect if layerType changes
-
-//   return (
-//     <div>
-//       <select onChange={handleLayerChange} value={layerType}>
-//         <option value="counties">Counties</option>
-//         <option value="tracts">Census Tracts</option>
-//         {/* Add more options as needed */}
-//       </select>
-//       <div
-//         className="map-container"
-//         style={{ height: "1000px", width: "100%" }}
-//         ref={mapRef}
-//       ></div>
-//     </div>
-//   );
-// };
-
-// export default MapComponent;
-
 import React, { useState, useEffect, useRef } from "react";
 import { loadModules } from "esri-loader";
+import Map from "@arcgis/core/Map";
+import MapView from "@arcgis/core/views/MapView";
+import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
+import PopupTemplate from "@arcgis/core/PopupTemplate";
+import esriConfig from "@arcgis/core/config";
+
+const ScaleChart = ({ min, max, cityValue, nationValue }) => {
+  const scaleWidth = max - min;
+  const cityPosition = ((cityValue - min) / scaleWidth) * 100;
+  const nationPosition = ((nationValue - min) / scaleWidth) * 100;
+
+  return (
+    <div className="chart-container">
+      <svg className="chart" viewBox="0 0 100 10">
+        <rect x="0" y="0" width="100" height="10" fill="lightgray" />
+        <circle cx={cityPosition} cy="5" r="5" fill="orange" />
+        <circle cx={nationPosition} cy="5" r="5" fill="blue" />
+      </svg>
+    </div>
+  );
+};
 
 const MapComponent = () => {
   const mapRef = useRef(null);
   const [layerType, setLayerType] = useState("counties");
 
+  // Definition expressions to filter the features
+  const countiesDefinitionExpression = `(countyname IN ('Mecklenburg','Gaston','Iredell','Catawba','Rowan','Lincoln','Cabarrus','Stanly','Cleveland','Union','Anson')) OR (countyname IN ('Chester','York','Lancaster'))`;
+  const  countiesDefinitionExpression1 = `(name IN ('Mecklenburg','Gaston','Iredell','Catawba','Rowan','Lincoln','Cabarrus','Stanly','Cleveland','Union','Anson')) OR (name IN ('Chester','York','Lancaster'))`;
+  const countiesDefinitionExpression2 = `(countyname IN ('Mecklenburg','Gaston','Iredell','Catawba','Rowan','Lincoln','Cabarrus','Stanly','Cleveland','Union','Anson') AND stateName='') OR (countyname IN ('Chester','York','Lancaster'))`;
+  
   useEffect(() => {
     let view;
 
@@ -98,9 +40,11 @@ const MapComponent = () => {
         "esri/Map",
         "esri/views/MapView",
         "esri/layers/FeatureLayer",
+        "esri/widgets/Popup",
+        "esri/PopupTemplate",
       ],
       { css: true }
-    ).then(([esriConfig, Map, MapView, FeatureLayer]) => {
+    ).then(([esriConfig, Map, MapView, FeatureLayer, Popup, PopupTemplate]) => {
       esriConfig.apiKey =
         "AAPKfc0531ceea1e4e4ba449ee44ffb7b738llqmKzaR6-Oz_wxBRlOT9kP_kH2deWLOy-kbHrgGEJymMDfOyzGnjCh67U7NBhE5";
 
@@ -111,22 +55,86 @@ const MapComponent = () => {
       view = new MapView({
         container: mapRef.current,
         map: map,
-        center: [-80.9795, 34.8283], // Center of the USA
-        zoom: 5,
+        center: [-80.9795, 35.2271], // Center on North Carolina
+        zoom: 7,
       });
 
+      // Popup templates
+      const popupTemplate = new PopupTemplate({
+        title: "{Name}", // Specify the attribute field to display in the title
+        content: [
+          {
+            // Specify content to show in the popup
+            type: "fields",
+            fieldInfos: [
+              {
+                fieldName: "namelsad",
+                label: "County name",
+              },
+              // Add additional fields here
+            ],
+          },
+        ],
+      });
+
+      const censuPopupTemplate = new PopupTemplate({
+        title: "{tractce}", // Specify the attribute field to display in the title
+        content: [
+          {
+            // Specify content to show in the popup
+            type: "fields",
+            fieldInfos: [
+              {
+                fieldName: "Name",
+                label: "Name",
+              },
+              {
+                fieldName: "Name",
+                label: "Population",
+              },
+              // Add additional fields here
+            ],
+          },
+        ],
+      });
+
+      const cititesPupupTemplate =   new PopupTemplate({
+        title: "{COUNTY_NAM}", // Specify the attribute field to display in the title
+        content: [
+          {
+            // Specify content to show in the popup
+            type: "fields",
+            fieldInfos: [
+              {
+                fieldName: "Population",
+                label: "Population",
+              },
+              // Add additional fields here
+            ],
+          },
+        ],
+      });
+
+      
+      // Create layers with the definitionExpression set
       const countiesLayer = new FeatureLayer({
-        url: "https://services1.arcgis.com/uCzmkROI93nvI5HX/arcgis/rest/services/Counties_of_North_Carolina_and_South_Carolina/FeatureServer",
+        url: "https://services1.arcgis.com/uCzmkROI93nvI5HX/arcgis/rest/services/nc_sc_counties/FeatureServer",
+        definitionExpression: countiesDefinitionExpression1,
+        popupTemplate: popupTemplate,
         visible: layerType === "counties",
       });
 
       const censusTractsLayer = new FeatureLayer({
-        url: "https://services1.arcgis.com/uCzmkROI93nvI5HX/arcgis/rest/services/nc_sc_tracts/FeatureServer",
+        url: "https://services1.arcgis.com/uCzmkROI93nvI5HX/arcgis/rest/services/nc_sc_census_tracts/FeatureServer",
+        definitionExpression: countiesDefinitionExpression,
+        popupTemplate: censuPopupTemplate,
         visible: layerType === "tracts",
       });
 
       const cityBoundariesLayer = new FeatureLayer({
-        url: "https://services1.arcgis.com/uCzmkROI93nvI5HX/arcgis/rest/services/NcScCityBoundaries/FeatureServer",
+        url: "https://services1.arcgis.com/uCzmkROI93nvI5HX/arcgis/rest/services/city_boundaries_nc_sc/FeatureServer",
+        definitionExpression: countiesDefinitionExpression2,
+        popupTemplate: cititesPupupTemplate,
         visible: layerType === "cities",
       });
 
@@ -139,8 +147,26 @@ const MapComponent = () => {
           censusTractsLayer.visible = layerType === "tracts";
           cityBoundariesLayer.visible = layerType === "cities";
         };
-
         updateLayerVisibility();
+
+        countiesLayer
+        .queryFeatures({
+          where: "1=1", // Query all features
+          returnGeometry: false, // Do not return geometry, only attributes
+          outFields: ["*"], // Specify the fields to be returned
+        })
+        .then((result) => {
+          // Access population data from the attributes of each feature
+          const features = result.features;
+          // console.log("features =====>", features.attributes);
+          features.forEach((feature) => {
+            const population = feature.attributes;
+            console.log("Population:", feature.attributes);
+          });
+        })
+        .catch((error) => {
+          console.error("Error querying features:", error);
+        });
       });
     });
 
@@ -151,6 +177,7 @@ const MapComponent = () => {
     };
   }, [layerType]);
 
+  // Rest of your component...
   const handleLayerChange = (event) => {
     setLayerType(event.target.value);
   };
@@ -158,12 +185,12 @@ const MapComponent = () => {
   return (
     <div>
       <select onChange={handleLayerChange} value={layerType}>
-        <option value="counties">North & South Carolina Counties</option>
+        <option value="counties">Counties</option>
         <option value="tracts">
-          North & South Carolina Counties Census Tracts
+          Tracts
         </option>
         <option value="cities">
-          North & South Carolina Counties City Boundaries
+          Boundaries
         </option>
       </select>
       <div className="map-container" ref={mapRef} style={{ height: 1000 }} />
