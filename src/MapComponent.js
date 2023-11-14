@@ -18,6 +18,10 @@ const MapComponent = () => {
         "esri/PopupTemplate",
         "esri/widgets/Slider",
         "esri/layers/GroupLayer",
+        "esri/widgets/Legend",
+        "esri/widgets/ScaleBar",
+        "esri/widgets/BasemapGallery",
+        "esri/widgets/BasemapLayerList",
         // other required modules
       ],
       { css: true }
@@ -32,11 +36,16 @@ const MapComponent = () => {
         PopupTemplate,
         Slider,
         GroupLayer,
+        Legend,
+        ScaleBar,
+        BasemapGallery,
+        BasemapLayerList,
       ]) => {
         // Definition expressions to filter the features
         const countiesDefinitionExpression = `(countyname IN ('Mecklenburg','Gaston','Iredell','Catawba','Rowan','Lincoln','Cabarrus','Stanly','Cleveland','Union','Anson')) OR (countyname IN ('Chester','York','Lancaster'))`;
         const countiesDefinitionExpression1 = `(name IN ('Mecklenburg','Gaston','Iredell','Catawba','Rowan','Lincoln','Cabarrus','Stanly','Cleveland','Union','Anson')) OR (name IN ('Chester','York','Lancaster'))`;
         const countiesDefinitionExpression2 = `(countyname IN ('Mecklenburg','Gaston','Iredell','Catawba','Rowan','Lincoln','Cabarrus','Stanly','Cleveland','Union','Anson')) OR (countyname IN ('CHESTER','YORK','LANCASTER'))`;
+        // const countiesDefinitionExpression3 = `state_fips IN (37, 45)`;
 
         //Popup templates
         const popupTemplate = new PopupTemplate({
@@ -97,7 +106,7 @@ const MapComponent = () => {
         // Define the three layers
         const countiesLayer = new FeatureLayer({
           /* Layer configuration */
-          title: "counties",
+          title: "Counties",
           url: "https://services1.arcgis.com/uCzmkROI93nvI5HX/arcgis/rest/services/nc_sc_counties/FeatureServer",
           definitionExpression: countiesDefinitionExpression1,
           popupTemplate: popupTemplate,
@@ -105,7 +114,7 @@ const MapComponent = () => {
         });
 
         const censusTractsLayer = new FeatureLayer({
-          title: "census tracts",
+          title: "Census Tracts",
           url: "https://services1.arcgis.com/uCzmkROI93nvI5HX/arcgis/rest/services/nc_sc_census_tracts/FeatureServer",
           definitionExpression: countiesDefinitionExpression,
           popupTemplate: censusPopupTemplate,
@@ -114,8 +123,9 @@ const MapComponent = () => {
 
         const cityBoundariesLayer = new FeatureLayer({
           /* Layer configuration */
-          title: "city boundaries",
+          title: "Cities",
           url: "https://services1.arcgis.com/uCzmkROI93nvI5HX/arcgis/rest/services/city_boundaries_nc_sc/FeatureServer",
+          // url: "https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/USA_Major_Cities_/FeatureServer",
           definitionExpression: countiesDefinitionExpression2,
           popupTemplate: citiesPopupTemplate,
           visible: false,
@@ -268,6 +278,26 @@ const MapComponent = () => {
 
           // Add widget to the top right corner of the view
           view.ui.add(layerList, "top-right");
+
+          //Legends
+          const legend = new Legend({
+            view: view,
+            layerInfos: [
+              {
+                layer: countiesLayer,
+                title: "Counties",
+              },
+              {
+                layer: censusTractsLayer,
+                title: "Census Tracts",
+              },
+              {
+                layer: cityBoundariesLayer,
+                title: "Cities",
+              },
+            ],
+          });
+          view.ui.add(legend, "bottom-right");
         });
       }
     );
