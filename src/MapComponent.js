@@ -21,7 +21,10 @@ const MapComponent = () => {
         "esri/widgets/Legend",
         "esri/widgets/ScaleBar",
         "esri/widgets/BasemapGallery",
-        "esri/widgets/BasemapLayerList",
+        "esri/widgets/Home",
+        "esri/widgets/Print",
+        "esri/widgets/TimeSlider",
+        "esri/widgets/ScaleRangeSlider",
         // other required modules
       ],
       { css: true }
@@ -39,7 +42,11 @@ const MapComponent = () => {
         Legend,
         ScaleBar,
         BasemapGallery,
-        BasemapLayerList,
+        Home,
+        Print,
+        TimeSlider,
+        ScaleRangeSlider,
+        // ValuePicker,
       ]) => {
         // Definition expressions to filter the features
         const countiesDefinitionExpression = `(countyname IN ('Mecklenburg','Gaston','Iredell','Catawba','Rowan','Lincoln','Cabarrus','Stanly','Cleveland','Union','Anson')) OR (countyname IN ('Chester','York','Lancaster'))`;
@@ -297,7 +304,102 @@ const MapComponent = () => {
               },
             ],
           });
-          view.ui.add(legend, "bottom-right");
+          view.ui.add(legend, "top-right");
+
+          //BasemapGallery widget
+          const basemapGallery = new BasemapGallery({
+            view: view,
+            container: document.createElement("div"),
+          });
+          const expandBasemapGallery = new Expand({
+            view: view,
+            content: basemapGallery.domNode, // Put the BasemapGallery inside the Expand widget
+            expanded: false, // Start with the gallery collapsed
+            expandIconClass: "esri-icon-basemap", // Icon for the expand widget
+            expandTooltip: "Show Basemap Gallery", // Tooltip text
+          });
+
+          view.ui.add(expandBasemapGallery, "top-left");
+
+          //Home Widget
+          const homeWidget = new Home({
+            view: view,
+          });
+          view.ui.add(homeWidget, "top-left");
+
+          //Print Widget
+          const printWidget = new Print({
+            view: view,
+            printServiceUrl:
+              "https://sampleserver6.arcgisonline.com/arcgis/rest/services/Utilities/PrintingTools/GPServer/Export%20Web%20Map%20Task",
+            container: document.createElement("div"),
+          });
+          const expandPrint = new Expand({
+            view: view,
+            content: printWidget.domNode,
+            expanded: false,
+            expandIconClass: "esri-icon-printer",
+            expandTooltip: "Print",
+          });
+          view.ui.add(expandPrint, "top-left");
+
+          //Time Slider
+
+          const timeSlider = new TimeSlider({
+            view: view,
+            container: document.createElement("div"),
+            mode: "instant",
+            fullTimeExtent: {
+              start: new Date(2000, 0, 1),
+              end: new Date(2020, 11, 31),
+            },
+            stops: {
+              interval: {
+                value: 1,
+                unit: "years",
+              },
+            },
+            layout: "compact",
+          });
+
+          view.ui.add(timeSlider, "bottom-left");
+
+          // Create the ScaleRangeSlider widget
+          const scaleRangeSlider = new ScaleRangeSlider({
+            view: view,
+            minScale: 5000,
+            maxScale: 500000,
+            container: document.createElement("div"),
+          });
+
+          // Create labels for "Population Min" and "Population Max"
+          const populationMinLabel = document.createElement("div");
+          populationMinLabel.textContent = "Population Min";
+          populationMinLabel.classList.add("population-label");
+
+          const populationMaxLabel = document.createElement("div");
+          populationMaxLabel.textContent = "Population Max";
+          populationMaxLabel.classList.add("population-label");
+
+          // Append labels to the scaleRangeSlider's container
+          scaleRangeSlider.container.appendChild(populationMinLabel);
+          scaleRangeSlider.container.appendChild(populationMaxLabel);
+
+          // Add custom styling to the container
+          scaleRangeSlider.container.style.backgroundColor = "#fff"; // Set a non-transparent background color
+          scaleRangeSlider.container.classList.add(
+            "scale-range-slider-container"
+          );
+
+          // Add the ScaleRangeSlider widget to the view UI
+          const scaleRangeExpand = new Expand({
+            view: view,
+            content: scaleRangeSlider.container,
+            expanded: false,
+            expandIconClass: "esri-icon-measure",
+          });
+
+          view.ui.add(scaleRangeExpand, "top-left");
         });
       }
     );
