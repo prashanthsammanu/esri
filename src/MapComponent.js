@@ -1,8 +1,26 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { loadModules } from "esri-loader";
-
+import { useAppContext } from "./AppContext";
+import LinearGauge from "./LinearGauge";
+import CustomWidget from "./CustomWidget";
+import "./App.css";
 const MapComponent = () => {
+  const [isLinearGaugeVisible, setLinearGaugeVisibility] = useState(false);
+
+  const toggleLinearGauge = () => {
+    setLinearGaugeVisibility(!isLinearGaugeVisible);
+  };
+
   const mapRef = useRef(null);
+  const { setGlobalFID } = useAppContext();
+
+  const handleFIDChange = (fid) => {
+    // Some logic to get the new FID
+    const newFID = fid; /* your logic here */
+
+    // Set the new FID in the global state
+    setGlobalFID(newFID);
+  };
 
   useEffect(() => {
     let view;
@@ -25,7 +43,6 @@ const MapComponent = () => {
         "esri/widgets/Print",
         "esri/widgets/TimeSlider",
         "esri/widgets/ScaleRangeSlider",
-        // other required modules
       ],
       { css: true }
     ).then(
@@ -241,6 +258,20 @@ const MapComponent = () => {
             listItemCreatedFunction: defineActions,
           });
 
+          // Add click event listener to the view
+          view.on("click", (event) => {
+            console.log(event);
+            // Identify the clicked feature
+            view.hitTest(event).then((response) => {
+              const { results } = response;
+              if (results.length > 0) {
+                const clickedFeature = results[0].graphic;
+                const population = clickedFeature.attributes.FID;
+                handleFIDChange(Math.floor(population / 100));
+              }
+            });
+          });
+
           // Event listener that fires each time an action is triggered
 
           layerList.on("trigger-action", (event) => {
@@ -255,28 +286,18 @@ const MapComponent = () => {
             const id = event.action.id;
 
             if (id === "full-extent") {
-              // if the full-extent action is triggered then navigate
-              // to the full extent of the visible layer
               view.goTo(visibleLayer.fullExtent).catch((error) => {
                 if (error.name != "AbortError") {
                   console.error(error);
                 }
               });
             } else if (id === "information") {
-              // if the information action is triggered, then
-              // open the item details page of the service layer
               window.open(visibleLayer.url);
             } else if (id === "increase-opacity") {
-              // if the increase-opacity action is triggered, then
-              // increase the opacity of the GroupLayer by 0.25
-
               if (demographicGroupLayer.opacity < 1) {
                 demographicGroupLayer.opacity += 0.25;
               }
             } else if (id === "decrease-opacity") {
-              // if the decrease-opacity action is triggered, then
-              // decrease the opacity of the GroupLayer by 0.25
-
               if (demographicGroupLayer.opacity > 0) {
                 demographicGroupLayer.opacity -= 0.25;
               }
@@ -342,64 +363,6 @@ const MapComponent = () => {
             expandTooltip: "Print",
           });
           view.ui.add(expandPrint, "top-left");
-
-          //Time Slider
-
-          const timeSlider = new TimeSlider({
-            view: view,
-            container: document.createElement("div"),
-            mode: "instant",
-            fullTimeExtent: {
-              start: new Date(2000, 0, 1),
-              end: new Date(2020, 11, 31),
-            },
-            stops: {
-              interval: {
-                value: 1,
-                unit: "years",
-              },
-            },
-            layout: "compact",
-          });
-
-          view.ui.add(timeSlider, "bottom-left");
-
-          // Create the ScaleRangeSlider widget
-          const scaleRangeSlider = new ScaleRangeSlider({
-            view: view,
-            minScale: 5000,
-            maxScale: 500000,
-            container: document.createElement("div"),
-          });
-
-          // Create labels for "Population Min" and "Population Max"
-          const populationMinLabel = document.createElement("div");
-          populationMinLabel.textContent = "Population Min";
-          populationMinLabel.classList.add("population-label");
-
-          const populationMaxLabel = document.createElement("div");
-          populationMaxLabel.textContent = "Population Max";
-          populationMaxLabel.classList.add("population-label");
-
-          // Append labels to the scaleRangeSlider's container
-          scaleRangeSlider.container.appendChild(populationMinLabel);
-          scaleRangeSlider.container.appendChild(populationMaxLabel);
-
-          // Add custom styling to the container
-          scaleRangeSlider.container.style.backgroundColor = "#fff"; // Set a non-transparent background color
-          scaleRangeSlider.container.classList.add(
-            "scale-range-slider-container"
-          );
-
-          // Add the ScaleRangeSlider widget to the view UI
-          const scaleRangeExpand = new Expand({
-            view: view,
-            content: scaleRangeSlider.container,
-            expanded: false,
-            expandIconClass: "esri-icon-measure",
-          });
-
-          view.ui.add(scaleRangeExpand, "top-left");
         });
       }
     );
@@ -412,7 +375,32 @@ const MapComponent = () => {
   }, []);
 
   return (
-    <div className="map-container" ref={mapRef} style={{ height: "100vh" }} />
+    <div style={{ position: "relative", height: "100vh" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          flexDirection: "column",
+          position: "absolute",
+          bottom: 20,
+          left: 15,
+          zIndex: 1,
+          padding: "2px",
+          backgroundColor: "white",
+        }}
+      >
+        {isLinearGaugeVisible && (
+          <div>
+            <LinearGauge />
+          </div>
+          //
+        )}
+        <button className="toggleButton button" onClick={toggleLinearGauge}>
+          {isLinearGaugeVisible ? "Hide" : "Show"}
+        </button>
+      </div>
+      <div className="map-container" ref={mapRef} style={{ height: "100vh" }} />
+    </div>
   );
 };
 

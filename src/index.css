@@ -11,3 +11,27 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+.esri-widget.custom-widget {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background-color: #fff;
+  padding: 10px;
+  border: 1px solid #ccc;
+}
+
+.toggleButton {background-color: #f2f1f1; color: black; font-size: 8px;} /* Gray */
+
+.button {
+  border: none;
+  padding: 10px;
+  text-align: center;
+  text-decoration: none;
+  font-size: 12px ;
+  margin:  0px;
+  width: 60px;
+  cursor: pointer;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+
+}
