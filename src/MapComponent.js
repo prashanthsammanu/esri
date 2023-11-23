@@ -127,6 +127,14 @@ const MapComponent = () => {
           ],
         });
 
+        // Define the static layer
+        const staticCountiesLayer = new FeatureLayer({
+          title: "Charlotte Region",
+          url: "https://services1.arcgis.com/uCzmkROI93nvI5HX/arcgis/rest/services/Charlotte_Dissolve_Merge/FeatureServer",
+          popupTemplate: popupTemplate, // You may want to customize this popup template for the static layer
+          visible: true, // Set to true to show by default
+        });
+
         // Define the three layers
         const countiesLayer = new FeatureLayer({
           /* Layer configuration */
@@ -142,7 +150,7 @@ const MapComponent = () => {
           url: "https://services1.arcgis.com/uCzmkROI93nvI5HX/arcgis/rest/services/nc_sc_census_tracts/FeatureServer",
           definitionExpression: countiesDefinitionExpression,
           popupTemplate: censusPopupTemplate,
-          visible: true,
+          visible: false,
         });
 
         const cityBoundariesLayer = new FeatureLayer({
@@ -168,7 +176,7 @@ const MapComponent = () => {
 
         const map = new Map({
           basemap: "streets-vector",
-          layers: [demographicGroupLayer],
+          layers: [demographicGroupLayer, staticCountiesLayer],
         });
 
         view = new MapView({
