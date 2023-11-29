@@ -1,9 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
-import { loadModules } from "esri-loader";
 import { useAppContext } from "./AppContext";
 import LinearGauge from "./LinearGauge";
-import CustomWidget from "./CustomWidget";
 import "./App.css";
+import { setDefaultOptions, loadModules } from 'esri-loader';
+// Set the version of the ArcGIS API for JavaScript you want to use
+setDefaultOptions({ version: '4.28' });
+
+
 const MapComponent = () => {
   const [isLinearGaugeVisible, setLinearGaugeVisibility] = useState(false);
 
@@ -43,6 +46,7 @@ const MapComponent = () => {
         "esri/widgets/Print",
         "esri/widgets/TimeSlider",
         "esri/widgets/ScaleRangeSlider",
+        "esri/widgets/ValuePicker"
       ],
       { css: true }
     ).then(
@@ -63,7 +67,7 @@ const MapComponent = () => {
         Print,
         TimeSlider,
         ScaleRangeSlider,
-        // ValuePicker,
+        ValuePicker,
       ]) => {
         // Definition expressions to filter the features
         const countiesDefinitionExpression = `(countyname IN ('Mecklenburg','Gaston','Iredell','Catawba','Rowan','Lincoln','Cabarrus','Stanly','Cleveland','Union','Anson')) OR (countyname IN ('Chester','York','Lancaster'))`;
@@ -371,6 +375,45 @@ const MapComponent = () => {
             expandTooltip: "Print",
           });
           view.ui.add(expandPrint, "top-left");
+
+          //ValuePicker
+
+          const valuePicker = new ValuePicker({
+            component: {
+              type: "combobox",
+              placeholder: "Pick Year",
+              items: [
+                { value: "2021", label: "2021"},
+                { value: "2020", label: "2020"}
+              ]
+            },
+            values: ["2021"]
+          });
+          view.ui.add(valuePicker, "top-right");
+
+
+          let comboboxVariables = [
+            {value:'munder5e',label:'Male Under 5'},
+            {value:'m5to9e',label:'Male 5 to 9'},
+            {value:'m10to14e',label:'Male 10 to 14'},
+            {value:'m15to17e',label:'Male 15 to 17'},
+            {value:'funder5e',label:'Female Under 5'},
+            {value:'f5to9e',label:'Female 5 to 9'},
+            {value:'f10to14e',label:'Female 10 to 14'},
+            {value:'f15to17e',label:'Female 15 to 17'}];
+
+          const metricValuePicker = new ValuePicker({
+            visibleElements: {
+              playButton: false
+            },
+            component: {
+              type: "combobox",
+              placeholder: "Metric",
+              items: comboboxVariables,
+            },
+            values: [comboboxVariables[0].value]
+          });
+          view.ui.add(metricValuePicker, "top-right");
         });
       }
     );

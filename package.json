@@ -7,7 +7,7 @@
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
-    "esri-loader": "^2.16.0",
+    "esri-loader": "^3.7.0",
     "esri-loader-hooks": "^0.4.0",
     "igniteui-react-core": "^18.3.1",
     "igniteui-react-gauges": "^18.3.1",
