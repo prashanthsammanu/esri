@@ -143,7 +143,7 @@ const MapComponent = () => {
         const countiesLayer = new FeatureLayer({
           /* Layer configuration */
           title: "Counties",
-          url: "https://services1.arcgis.com/uCzmkROI93nvI5HX/arcgis/rest/services/nc_sc_counties/FeatureServer",
+          url: "https://services1.arcgis.com/uCzmkROI93nvI5HX/arcgis/rest/services/counties_charlotte_data_updated/FeatureServer",
           definitionExpression: countiesDefinitionExpression1,
           popupTemplate: popupTemplate,
           visible: false,
