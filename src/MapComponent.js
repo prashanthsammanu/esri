@@ -151,7 +151,7 @@ const MapComponent = () => {
 
         const censusTractsLayer = new FeatureLayer({
           title: "Census Tracts",
-          url: "https://services1.arcgis.com/uCzmkROI93nvI5HX/arcgis/rest/services/nc_sc_census_tracts/FeatureServer",
+          url: "https://services1.arcgis.com/uCzmkROI93nvI5HX/arcgis/rest/services/charlotte_censustracts_updated/FeatureServer",
           definitionExpression: countiesDefinitionExpression,
           popupTemplate: censusPopupTemplate,
           visible: false,
