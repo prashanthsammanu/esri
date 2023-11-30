@@ -72,7 +72,7 @@ const MapComponent = () => {
         // Definition expressions to filter the features
         const countiesDefinitionExpression = `(countyname IN ('Mecklenburg','Gaston','Iredell','Catawba','Rowan','Lincoln','Cabarrus','Stanly','Cleveland','Union','Anson')) OR (countyname IN ('Chester','York','Lancaster'))`;
         const countiesDefinitionExpression1 = `(name IN ('Mecklenburg','Gaston','Iredell','Catawba','Rowan','Lincoln','Cabarrus','Stanly','Cleveland','Union','Anson')) OR (name IN ('Chester','York','Lancaster'))`;
-        const countiesDefinitionExpression2 = `(countyname IN ('Mecklenburg','Gaston','Iredell','Catawba','Rowan','Lincoln','Cabarrus','Stanly','Cleveland','Union','Anson')) OR (countyname IN ('CHESTER','YORK','LANCASTER'))`;
+        const countiesDefinitionExpression2 = `(countyname IN ('Mecklenburg','Gaston','Iredell','Catawba','Rowan','Lincoln','Cabarrus','Stanly','Cleveland','Union','Anson')) OR (COUNTY_NAM IN ('CHESTER','YORK','LANCASTER'))`;
         // const countiesDefinitionExpression3 = `state_fips IN (37, 45)`;
 
         //Popup templates
