@@ -1,11 +1,15 @@
 import React, { useEffect, useRef, useState } from "react";
-import { loadModules } from "esri-loader";
 import { useAppContext } from "./AppContext";
 import LinearGauge from "./LinearGauge";
-import CustomWidget from "./CustomWidget";
 import "./App.css";
+import { setDefaultOptions, loadModules } from "esri-loader";
+setDefaultOptions({ version: "4.28" });
+
 const MapComponent = () => {
+  const [metric, setMetric] = useState("Male_under_5E");
   const [isLinearGaugeVisible, setLinearGaugeVisibility] = useState(false);
+  const [censusPopulation, setCensusPopulation] = useState("Male_under_5E");
+  // const { fid, setGlobalFID } = useAppContext();
 
   const toggleLinearGauge = () => {
     setLinearGaugeVisibility(!isLinearGaugeVisible);
@@ -43,6 +47,7 @@ const MapComponent = () => {
         "esri/widgets/Print",
         "esri/widgets/TimeSlider",
         "esri/widgets/ScaleRangeSlider",
+        "esri/widgets/ValuePicker",
       ],
       { css: true }
     ).then(
@@ -63,12 +68,12 @@ const MapComponent = () => {
         Print,
         TimeSlider,
         ScaleRangeSlider,
-        // ValuePicker,
+        ValuePicker,
       ]) => {
         // Definition expressions to filter the features
         const countiesDefinitionExpression = `(countyname IN ('Mecklenburg','Gaston','Iredell','Catawba','Rowan','Lincoln','Cabarrus','Stanly','Cleveland','Union','Anson')) OR (countyname IN ('Chester','York','Lancaster'))`;
         const countiesDefinitionExpression1 = `(name IN ('Mecklenburg','Gaston','Iredell','Catawba','Rowan','Lincoln','Cabarrus','Stanly','Cleveland','Union','Anson')) OR (name IN ('Chester','York','Lancaster'))`;
-        const countiesDefinitionExpression2 = `(countyname IN ('Mecklenburg','Gaston','Iredell','Catawba','Rowan','Lincoln','Cabarrus','Stanly','Cleveland','Union','Anson')) OR (countyname IN ('CHESTER','YORK','LANCASTER'))`;
+        const countiesDefinitionExpression2 = `(countyname IN ('Mecklenburg','Gaston','Iredell','Catawba','Rowan','Lincoln','Cabarrus','Stanly','Cleveland','Union','Anson')) OR (COUNTY_NAM IN ('CHESTER','YORK','LANCASTER'))`;
         // const countiesDefinitionExpression3 = `state_fips IN (37, 45)`;
 
         //Popup templates
@@ -82,6 +87,10 @@ const MapComponent = () => {
                 {
                   fieldName: "namelsad",
                   label: "County name",
+                },
+                {
+                  fieldName: censusPopulation,
+                  label: "Population",
                 },
                 // Add additional fields here
               ],
@@ -101,7 +110,7 @@ const MapComponent = () => {
                   label: "Name",
                 },
                 {
-                  fieldName: "Name",
+                  fieldName: censusPopulation,
                   label: "Population",
                 },
                 // Add additional fields here
@@ -132,25 +141,28 @@ const MapComponent = () => {
           title: "Charlotte Region",
           url: "https://services1.arcgis.com/uCzmkROI93nvI5HX/arcgis/rest/services/Charlotte_Dissolve_Merge/FeatureServer",
           popupTemplate: popupTemplate, // You may want to customize this popup template for the static layer
-          visible: true, // Set to true to show by default
+          visible: false, // Set to true to show by default
+          outFields: ["*"],
         });
 
         // Define the three layers
         const countiesLayer = new FeatureLayer({
           /* Layer configuration */
           title: "Counties",
-          url: "https://services1.arcgis.com/uCzmkROI93nvI5HX/arcgis/rest/services/nc_sc_counties/FeatureServer",
+          url: "https://services1.arcgis.com/uCzmkROI93nvI5HX/arcgis/rest/services/counties_charlotte_data_updated/FeatureServer",
           definitionExpression: countiesDefinitionExpression1,
           popupTemplate: popupTemplate,
           visible: false,
+          outFields: ["*"],
         });
 
         const censusTractsLayer = new FeatureLayer({
           title: "Census Tracts",
-          url: "https://services1.arcgis.com/uCzmkROI93nvI5HX/arcgis/rest/services/nc_sc_census_tracts/FeatureServer",
+          url: "https://services1.arcgis.com/uCzmkROI93nvI5HX/arcgis/rest/services/charlotte_censustracts_updated/FeatureServer",
           definitionExpression: countiesDefinitionExpression,
           popupTemplate: censusPopupTemplate,
-          visible: false,
+          visible: true,
+          outFields: ["*"],
         });
 
         const cityBoundariesLayer = new FeatureLayer({
@@ -268,14 +280,28 @@ const MapComponent = () => {
 
           // Add click event listener to the view
           view.on("click", (event) => {
-            console.log(event);
             // Identify the clicked feature
             view.hitTest(event).then((response) => {
               const { results } = response;
               if (results.length > 0) {
                 const clickedFeature = results[0].graphic;
-                const population = clickedFeature.attributes.FID;
-                handleFIDChange(Math.floor(population / 100));
+                const clickedLayer = results[0].layer;
+
+                // Access fields from the layer
+                const fields = clickedLayer.fields;
+
+                // Log all field values to the console
+                const attributes = clickedFeature.attributes;
+
+                // Access specific field values using field names from layer.fields
+                // fields.forEach((field) => {
+                //   const fieldName = field.name;
+                //   const fieldValue = attributes[fieldName];
+                //   console.log(`${fieldName}: ${fieldValue}`);
+                // })
+                const population = attributes[censusPopulation];
+                // const percentPopulation = Math.min(100, Math.max(0, (population - min) / (max - min) * 100));
+                setGlobalFID(population / 10);
               }
             });
           });
@@ -371,6 +397,51 @@ const MapComponent = () => {
             expandTooltip: "Print",
           });
           view.ui.add(expandPrint, "top-left");
+
+          //ValuePicker
+
+          const valuePicker = new ValuePicker({
+            component: {
+              type: "combobox",
+              placeholder: "Pick Year",
+              items: [
+                { value: "2021", label: "2021" },
+                { value: "2020", label: "2020" },
+              ],
+            },
+            values: ["2021"],
+          });
+          view.ui.add(valuePicker, "top-right");
+
+          let comboboxVariables = [
+            { value: "Male_under_5E", label: "Male Under 5" },
+            { value: "Male_5_to_9E", label: "Male 5 to 9" },
+            { value: "Male_10_to_14E", label: "Male 10 to 14" },
+            { value: "Male_15_to_17E", label: "Male 15 to 17" },
+            { value: "Female_under_5E", label: "Female Under 5" },
+            { value: "Female_5_to_9E", label: "Female 5 to 9" },
+            { value: "Female_10_to_14E", label: "Female 10 to 14" },
+            { value: "Female_15_to_17E", label: "Female 15 to 17" },
+          ];
+
+          const metricValuePicker = new ValuePicker({
+            visibleElements: {
+              playButton: false,
+            },
+            component: {
+              type: "combobox",
+              placeholder: "Metric",
+              items: comboboxVariables,
+            },
+            values: [comboboxVariables[0].value],
+          });
+          view.ui.add(metricValuePicker, "top-right");
+
+          metricValuePicker.watch("values", (newValue) => {
+            const selectedMetricValue = newValue[0];
+            setMetric(selectedMetricValue);
+            setCensusPopulation(selectedMetricValue);
+          });
         });
       }
     );
@@ -380,7 +451,7 @@ const MapComponent = () => {
         view.destroy();
       }
     };
-  }, []);
+  }, [metric]);
 
   return (
     <div style={{ position: "relative", height: "100vh" }}>
